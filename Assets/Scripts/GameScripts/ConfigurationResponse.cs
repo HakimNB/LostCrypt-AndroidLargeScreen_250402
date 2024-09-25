@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class ConfigurationResponse : MonoBehaviour {
@@ -11,21 +10,18 @@ public class ConfigurationResponse : MonoBehaviour {
 		UnpauseGame();
 	}
 
-	public void PauseGame() {
+	public void PauseGame(bool autoUnpause) {
         rootPauseScreen.SetActive(true);
         Time.timeScale = 0.0f;
 		labelPauseContinue.text = "(tap to continue)";
-	}
+
+		if (autoUnpause)
+			StartCoroutine(UnpauseInTime(autoUnpauseTime));
+    }
 
     public void UnpauseGame() {
 		rootPauseScreen.SetActive(false);
 		Time.timeScale = 1.0f;
-	}
-
-	public void ConditionallyPauseGameOnOrientationChange(ConfigurationManager.OrientationInfo config) {
-		// Only partially pause (don't require user input) if a configuration change occured, unless player taps sooner
-		PauseGame();
-		StartCoroutine(UnpauseInTime(autoUnpauseTime));
 	}
 
 	IEnumerator UnpauseInTime(float time) {
@@ -36,10 +32,5 @@ public class ConfigurationResponse : MonoBehaviour {
 		}
 
 		UnpauseGame();
-	}
-
-	public void ConditionallyPauseGameOnFoldChange(ConfigurationManager.FoldInfo foldInfo) {
-		// Set pause if we changed from folded to unfolded configurations
-		PauseGame();
 	}
 }
