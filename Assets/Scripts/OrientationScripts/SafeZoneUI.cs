@@ -18,11 +18,10 @@ public class SafeZoneUI : MonoBehaviour {
 			return;
 		}
 
-		ConfigurationManager.ActionOnOrientationChange += ApplySafeZone;
-		ApplySafeZone(null);
+		ApplySafeZone();
 	}
 
-	public void ApplySafeZone(ConfigurationManager.OrientationInfo _) {
+	public void ApplySafeZone() {
 		safeArea = Screen.safeArea;
 		anchorMin = safeArea.position;
 		anchorMax = safeArea.position + safeArea.size;
