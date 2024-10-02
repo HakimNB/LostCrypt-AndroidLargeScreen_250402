@@ -51,8 +51,7 @@ public class Configuration : MonoBehaviour {
 
         if (UnityEngine.Device.Screen.orientation != lastOrientation) {
             lastOrientation = UnityEngine.Device.Screen.orientation;
-            AndroidConfiguration newConfig = new AndroidConfiguration();
-            OnUIChanges?.Invoke(newConfig);
+            OnUIChanges?.Invoke(new AndroidConfiguration());
         }
     }
 }
