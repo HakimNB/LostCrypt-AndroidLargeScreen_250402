@@ -1,4 +1,6 @@
 # Android Large Screen x Unity Sample Project
+**Note: This version supports Unity 2021 and Unity 2022.  For Unity 6 support, please see [_this branch_](https://github.com/JohnO-Unity/LostCrypt-AndroidLargeScreen/tree/Unity6-NativeOnConfigurationChange).**
+
 This is a Large Screen optimized behavior example project, based on the Unity 2D demonstration project [_Lost Crypt_](https://assetstore.unity.com/packages/essentials/tutorial-projects/lost-crypt-2d-sample-project-158673).
 
 Supporting Large Screen and Foldable devices requires a number of changes to the Unity build options, as well as considerations in the layout of your camera and UI canvases.
