@@ -8,15 +8,19 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/0.OriginalScene/Original.unity
     guid: 0c01dfdf81ff7e749b7951db7557814a
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/1.HandleAnchoring/Anchoring.unity
     guid: 61c30210d8166cb4d97e86dc7a6d4404
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/2.HandleHinge/HingeAware.unity
     guid: 348cadf2f4467e84e9c4616c45e10af1
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Debugging/DebuggingScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/Scenes/Mainmenu/Mainmenu.unity
+    guid: cd16be3986a3a4b6db77b0b32b9d69c7
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 61f9259079b40d9428bbe754ec1960ef,
       type: 2}
+  m_UseUCBPForAssetBundles: 0
