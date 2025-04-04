@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class OnScreenControls : MonoBehaviour
 {
@@ -18,5 +20,11 @@ public class OnScreenControls : MonoBehaviour
 
         if (isMobile)
             Application.targetFrameRate = 60;
+    
+    }
+
+    public void BackToMainmenuScene()
+    {
+        SceneManager.LoadSceneAsync("Mainmenu");
     }
 }
