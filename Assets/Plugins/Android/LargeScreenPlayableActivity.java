@@ -4,10 +4,7 @@ import com.unity3d.player.UnityPlayerActivity;
 
 import android.app.Activity;
 import android.content.res.Configuration;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Bundle;
-import android.os.Build;
+import android.os.*;
 import android.view.WindowManager;
 import android.util.Log;
 import android.view.Display;
@@ -16,9 +13,17 @@ import android.util.DisplayMetrics;
 import org.json.JSONObject;
 import org.json.JSONException;
 import android.graphics.Rect;
-import android.view.Surface;
+import android.view.*;
+import android.widget.*;
 
+import androidx.window.area.WindowAreaCapability;
+import androidx.window.area.WindowAreaController;
+import androidx.window.area.WindowAreaInfo;
+import androidx.window.area.WindowAreaPresentationSessionCallback;
+import androidx.window.area.WindowAreaSessionPresenter;
+import androidx.window.java.area.WindowAreaControllerCallbackAdapter;
 import androidx.window.java.layout.WindowInfoTrackerCallbackAdapter;
+
 import androidx.window.layout.DisplayFeature;
 import androidx.window.layout.FoldingFeature;
 import androidx.window.layout.WindowInfoTracker;
@@ -35,11 +40,10 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
 
+import androidx.core.content.*;
 
-import static androidx.core.content.ContextCompat.getSystemService;
 
-
-public class LargeScreenPlayableActivity extends UnityPlayerActivity {
+public class LargeScreenPlayableActivity extends UnityPlayerActivity implements WindowAreaPresentationSessionCallback {
 	String TAG = "LargeScreenPlayable";
 	private SensorManager mSensorManager;
     private Sensor mHingeAngleSensor;
@@ -51,6 +55,96 @@ public class LargeScreenPlayableActivity extends UnityPlayerActivity {
     WindowInfoTrackerCallbackAdapter wit;
     private final LayoutStateChangeCallback layoutStateChangeCallback =
             new LayoutStateChangeCallback();
+
+    // + DD
+    private WindowAreaControllerCallbackAdapter windowAreaController = null;
+    private Executor displayExecutor = null;
+    private WindowAreaSessionPresenter windowAreaSession = null;
+    private WindowAreaInfo windowAreaInfo = null;
+    private WindowAreaCapability.Status capabilityStatus  =
+            WindowAreaCapability.Status.WINDOW_AREA_STATUS_UNSUPPORTED;
+
+    private WindowAreaCapability.Operation dualScreenOperation =
+            WindowAreaCapability.Operation.OPERATION_PRESENT_ON_AREA;
+    private WindowAreaCapability.Operation rearDisplayOperation =
+            WindowAreaCapability.Operation.OPERATION_TRANSFER_ACTIVITY_TO_AREA;
+
+    private boolean callOnce = false;
+
+    private void updateUI() {
+        Log.d(TAG, "updateUI: " + capabilityStatus.toString());
+        if ( callOnce ) {
+            return;
+        }
+        callOnce = true;
+        if (capabilityStatus.equals(WindowAreaCapability.Status.WINDOW_AREA_STATUS_UNSUPPORTED)) {
+            // The selected display mode is not supported on this device.
+        } else if (capabilityStatus.equals(WindowAreaCapability.Status.WINDOW_AREA_STATUS_UNAVAILABLE)) {
+            // The selected display mode is not available.
+        } else if (capabilityStatus.equals(WindowAreaCapability.Status.WINDOW_AREA_STATUS_AVAILABLE)) {
+            // The selected display mode is available and can be enabled.
+            toggleDualScreenMode(true);
+        } else if (capabilityStatus.equals(WindowAreaCapability.Status.WINDOW_AREA_STATUS_ACTIVE)) {
+            // The selected display mode is already active.
+        } else {
+            // The selected display mode status is unknown.
+        }
+    }
+
+    private void toggleDualScreenMode(boolean turnOn) {
+        if ( turnOn ) {
+            // turn dual display on
+            if ( windowAreaSession == null ) {
+                Binder token = windowAreaInfo.getToken();
+                windowAreaController.presentContentOnWindowArea(token, this, displayExecutor, this);
+            }
+        } else {
+            // turn dual display off
+            if ( windowAreaSession != null ) {
+                windowAreaSession.close();
+            }
+        }
+    }
+
+    private void updateCapabilities() {
+        Log.d("DualDisplay", "DualDisplay updateCapabilities");
+        windowAreaController.addWindowAreaInfoListListener(displayExecutor,
+                windowAreaInfos -> {
+                    Log.d("DualDisplay", "DualDisplay updateCapabilities size: " + windowAreaInfos.stream().count());
+                    for(WindowAreaInfo newInfo : windowAreaInfos){
+                        Log.d("DualDisplay", "DualDisplay updateCapabilities newInfo: " + newInfo.toString());
+                        if(newInfo.getType().equals(WindowAreaInfo.Type.TYPE_REAR_FACING)){
+                            windowAreaInfo = newInfo;
+                            capabilityStatus = newInfo.getCapability(dualScreenOperation).getStatus();
+                            break;
+                        }
+                        Log.d("DualDisplay", "DualDisplay windowAreaInfo: " + newInfo.getCapability(dualScreenOperation).getStatus());
+                    }
+                    updateUI();
+                });
+    }
+
+    @Override
+    public void onSessionStarted(WindowAreaSessionPresenter session) {
+        windowAreaSession = session;
+        TextView view = new TextView(session.getContext());
+        view.setText("Hello world, from the other screen!");
+        session.setContentView(view);
+    }
+
+    @Override
+    public void onSessionEnded(Throwable t) {
+        if(t != null) {
+            Log.e(TAG, "DualDisplay Something was broken: " + t.getMessage());
+        }
+        windowAreaSession = null;
+    }
+
+    @Override
+    public void onContainerVisibilityChanged(boolean isVisible) {
+        Log.d(TAG, "DualDisplay onContainerVisibilityChanged. isVisible = " + isVisible);
+    }
+    // - DD
 	
 
     @Override
@@ -65,6 +159,25 @@ public class LargeScreenPlayableActivity extends UnityPlayerActivity {
         wit = new WindowInfoTrackerCallbackAdapter(WindowInfoTracker.getOrCreate(this));
         wit.addWindowLayoutInfoListener(
             this, Runnable::run, layoutStateChangeCallback);
+
+        // + DD
+        displayExecutor = ContextCompat.getMainExecutor(this);
+        windowAreaController = new WindowAreaControllerCallbackAdapter(WindowAreaController.getOrCreate());
+        // windowAreaController.addWindowAreaInfoListListener(displayExecutor, this);
+
+        // windowAreaController.addWindowAreaInfoListListener(displayExecutor,
+        // windowAreaInfos -> {
+        //     for(WindowAreaInfo newInfo : windowAreaInfos){
+        //         if(newInfo.getType().equals(WindowAreaInfo.Type.TYPE_REAR_FACING)){
+        //             windowAreaInfo = newInfo;
+        //             capabilityStatus = newInfo.getCapability(dualScreenOperation).getStatus();
+        //             break;
+        //         }
+        //         Log.d(TAG, "DualDisplay windowAreaInfo: " + newInfo.getCapability(dualScreenOperation).getStatus);
+        //     }
+        // });
+        updateCapabilities();
+        // - DD
     }
 
     @Override
