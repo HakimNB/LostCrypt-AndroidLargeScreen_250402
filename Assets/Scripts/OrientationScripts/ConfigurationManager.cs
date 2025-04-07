@@ -9,11 +9,15 @@ public class ConfigurationManager : MonoBehaviour {
 	public Action<OrientationInfo> ActionOnOrientationChange;
 	public Action<FoldInfo> ActionOnFoldChange;
 
+	public Action<int> ActionOnDualDisplayAvailabilityChanged;
+
 	AndroidJavaObject foldablePlayerActivity = null;
 
 	// For any scene/inspector based interest in responding to events
 	public UnityEvent<OrientationInfo> OnConfigurationChanged;
 	public UnityEvent<FoldInfo> OnFoldChanged;
+
+	public UnityEvent<int> OnDualDisplayAvailabilityChanged;
 
 	// To use the JsonUtility.FromJson, we start with a serializable struct or class with public fields
 	[System.Serializable]
@@ -52,12 +56,14 @@ public class ConfigurationManager : MonoBehaviour {
 
 		ActionOnOrientationChange += HandleLocalOnConfigurationChanged;
 		ActionOnFoldChange += HandleLocalOnFoldChanged;
+		ActionOnDualDisplayAvailabilityChanged += HandleOnDualDisplayAvailabilityChanged;
 	}
 
 	private void OnDestroy() {
         Debug.Log("Destroy Configuration Manager");
 		ActionOnOrientationChange -= HandleLocalOnConfigurationChanged;
 		ActionOnFoldChange -= HandleLocalOnFoldChanged;
+		ActionOnDualDisplayAvailabilityChanged -= HandleOnDualDisplayAvailabilityChanged;
 	}
 
 	// This will be called from the OverrideForLargeScreen.java class, from the activity callback onConfigurationChanged
@@ -68,6 +74,35 @@ public class ConfigurationManager : MonoBehaviour {
 
 		// Always call the refresh from the main Unity thread, since this is where the UI updates occur
 		StartCoroutine(ExecuteOnMainUnityThread(ActionOnOrientationChange, info));
+	}
+
+	public bool isDualDisplayAvailable() {
+		bool bAvailable = false;
+		if ( Application.platform == RuntimePlatform.Android ) {
+			bAvailable = foldablePlayerActivity.Call<Boolean>("isDualDisplayAvailable");
+		}
+		Debug.Log("ConfigurationManager.isDualDisplayAvailable: " + bAvailable);
+		return bAvailable;
+	}
+
+	public void onDualDisplayAvailabilityChanged(string strAvailability) {
+		Debug.Log("ConfigurationManager.onDualDisplayAvailabilityChanged : " + strAvailability);
+		int iAvailable = 0;
+		try { 
+			iAvailable = Int32.Parse(strAvailability);
+		} catch ( FormatException e ) {
+			Debug.Log("ConfigurationManager.onDualDisplayAvailabilityChanged: " + e.Message);
+		}
+
+		// Always call the refresh from the main Unity thread, since this is where the UI updates occur
+		StartCoroutine(ExecuteOnMainUnityThread(ActionOnDualDisplayAvailabilityChanged, iAvailable));
+	}
+
+	public void toggleDualDisplay(bool turnOn) {
+		Debug.Log("ConfigurationManager.toggleDualDisplay: " + turnOn);
+		if ( Application.platform == RuntimePlatform.Android ) {
+			foldablePlayerActivity.Call("toggleDualScreenMode", turnOn);
+		}
 	}
 
 	public void onFoldChanged(string strFoldInfo) {
@@ -108,5 +143,9 @@ public class ConfigurationManager : MonoBehaviour {
 	}
 	void HandleLocalOnFoldChanged(FoldInfo info) {
 		OnFoldChanged?.Invoke(info);
+	}
+
+	void HandleOnDualDisplayAvailabilityChanged(int availability) {
+		OnDualDisplayAvailabilityChanged?.Invoke(availability);
 	}
 }

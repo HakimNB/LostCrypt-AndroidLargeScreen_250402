@@ -14,6 +14,7 @@ public class MainmenuControlOnFold : MonoBehaviour
     public Button originalP;
     public Button anchoringP;
     public Button hingeP;
+    public Toggle dualdisplayP;
     public Button confirmButtonP;
     public Button cancelButtonP;
     public UnityEngine.UI.ScrollRect textViewP;
@@ -22,6 +23,7 @@ public class MainmenuControlOnFold : MonoBehaviour
     public Button originalL;
     public Button anchoringL;
     public Button hingeL;
+    public Toggle dualdisplayL;
     public Button confirmButtonL;
     public Button cancelButtonL;
     public UnityEngine.UI.ScrollRect textViewL;
@@ -29,6 +31,7 @@ public class MainmenuControlOnFold : MonoBehaviour
     public Button originalH;
     public Button anchoringH;
     public Button hingeH;
+    public Toggle dualdisplayH;
     public Button confirmButtonH;
     public Button cancelButtonH;
     public UnityEngine.UI.ScrollRect textViewH;
@@ -84,11 +87,20 @@ public class MainmenuControlOnFold : MonoBehaviour
         UpdateButtonOnStateChange();
         configurationManager = (ConfigurationManager)GameObject.Find("ConfigurationManager")
             .GetComponent(typeof(ConfigurationManager));
-        configurationManager.ActionOnOrientationChange += OnOrientationChange;        
+        configurationManager.ActionOnOrientationChange += OnOrientationChange;  
+        configurationManager.ActionOnDualDisplayAvailabilityChanged += OnDualDisplayAvailabilityChange;      
         isConfirmState = false;
         textViewH.transform.GetChild(0).transform.GetChild(0)
             .GetComponent<TextMeshProUGUI>().SetText(MENU_TEXT);
+
+        bool bAvailable = configurationManager.isDualDisplayAvailable();
+        OnDualDisplayAvailabilityChange(bAvailable ? 1 : 0);
     }
+
+    private void OnDestroy() {
+        configurationManager.ActionOnOrientationChange -= OnOrientationChange;
+        configurationManager.ActionOnDualDisplayAvailabilityChanged -= OnDualDisplayAvailabilityChange;
+	}
 
     private void SetButtonsListeners()
     {
@@ -138,6 +150,18 @@ public class MainmenuControlOnFold : MonoBehaviour
             default:
                 break;
         }
+    }
+
+    public void ToggleDualDisplay(bool isOn)
+    {
+        Debug.Log("ToggleDualDisplay: " + isOn + " Display.displays.Length: " + Display.displays.Length);
+        configurationManager.toggleDualDisplay(isOn);
+
+        // // ++ DEBUG - Display.displays.Length is always 1
+        // for ( int i = 0;i < Display.displays.Length; i++ ) {
+        //     Display.displays[i].Activate();
+        // }
+        // // -- DEBUG
     }
 
     private void ChangeToConfirmState(TARGET_SCENE targetScene)
@@ -199,19 +223,28 @@ public class MainmenuControlOnFold : MonoBehaviour
         originalP.gameObject.SetActive(!isConfirmState);
         anchoringP.gameObject.SetActive(!isConfirmState);
         hingeP.gameObject.SetActive(!isConfirmState);
+        dualdisplayP.gameObject.SetActive(!isConfirmState);
 
         originalL.gameObject.SetActive(!isConfirmState);
         anchoringL.gameObject.SetActive(!isConfirmState);
         hingeL.gameObject.SetActive(!isConfirmState);
+        dualdisplayL.gameObject.SetActive(!isConfirmState);
 
         originalH.gameObject.SetActive(!isConfirmState);
         anchoringH.gameObject.SetActive(!isConfirmState);
         hingeH.gameObject.SetActive(!isConfirmState);
+        dualdisplayH.gameObject.SetActive(!isConfirmState);
     }
 
     private void OnOrientationChange(ConfigurationManager.OrientationInfo info)
     {
         ResetButtonsPosition(info.orientation);
+    }
+
+    private void OnDualDisplayAvailabilityChange(int availability) {
+        dualdisplayP.interactable = availability != 0;
+        dualdisplayL.interactable = availability != 0;
+        dualdisplayH.interactable = availability != 0;
     }
 
     // Start is called before the first frame update

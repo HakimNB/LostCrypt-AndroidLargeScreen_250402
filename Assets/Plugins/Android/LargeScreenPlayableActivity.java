@@ -69,29 +69,54 @@ public class LargeScreenPlayableActivity extends UnityPlayerActivity implements 
     private WindowAreaCapability.Operation rearDisplayOperation =
             WindowAreaCapability.Operation.OPERATION_TRANSFER_ACTIVITY_TO_AREA;
 
-    private boolean callOnce = false;
+    private boolean isDualDisplayAvailable = false;
 
     private void updateUI() {
-        Log.d(TAG, "updateUI: " + capabilityStatus.toString());
-        if ( callOnce ) {
-            return;
-        }
-        callOnce = true;
         if (capabilityStatus.equals(WindowAreaCapability.Status.WINDOW_AREA_STATUS_UNSUPPORTED)) {
             // The selected display mode is not supported on this device.
+            isDualDisplayAvailable = false;
         } else if (capabilityStatus.equals(WindowAreaCapability.Status.WINDOW_AREA_STATUS_UNAVAILABLE)) {
             // The selected display mode is not available.
+            isDualDisplayAvailable = false;
         } else if (capabilityStatus.equals(WindowAreaCapability.Status.WINDOW_AREA_STATUS_AVAILABLE)) {
             // The selected display mode is available and can be enabled.
-            toggleDualScreenMode(true);
+            // toggleDualScreenMode(true);
+            isDualDisplayAvailable = true;
         } else if (capabilityStatus.equals(WindowAreaCapability.Status.WINDOW_AREA_STATUS_ACTIVE)) {
             // The selected display mode is already active.
         } else {
             // The selected display mode status is unknown.
+            isDualDisplayAvailable = false;
         }
+
+        // This will be sent to the C# layer in Unity, and can be received by the gameObject "ConfigurationManager"
+        String param = isDualDisplayAvailable ? "1" : "0";
+        mUnityPlayer.UnitySendMessage("ConfigurationManager", "onDualDisplayAvailabilityChanged", param);
+    }
+
+    /**
+     * Check whether the system support dual display
+     * @return true - if the second display is available and can be turned on
+     */
+    public boolean isDualDisplayAvailable() {
+        Log.d("DualDisplay", "DualDisplay isDualDisplayAvailable: " + isDualDisplayAvailable);
+        return isDualDisplayAvailable;
+    }
+
+    /**
+     * Check whether the secondary display is active
+     * @return true - if the second display is turned on, false otherwise
+     */
+    public boolean isDualDisplayActive() {
+        Log.d("DualDisplay", "DualDisplay isDualDisplayActive: " + (windowAreaSession != null));
+        return windowAreaSession != null;
     }
 
     private void toggleDualScreenMode(boolean turnOn) {
+        Log.d("DualDisplay", "DualDisplay toggleDualScreenMode: " + turnOn + " isDualDisplayAvailable: " + isDualDisplayAvailable);
+        if ( !isDualDisplayAvailable ) {
+            return;
+        }
         if ( turnOn ) {
             // turn dual display on
             if ( windowAreaSession == null ) {
@@ -163,19 +188,7 @@ public class LargeScreenPlayableActivity extends UnityPlayerActivity implements 
         // + DD
         displayExecutor = ContextCompat.getMainExecutor(this);
         windowAreaController = new WindowAreaControllerCallbackAdapter(WindowAreaController.getOrCreate());
-        // windowAreaController.addWindowAreaInfoListListener(displayExecutor, this);
 
-        // windowAreaController.addWindowAreaInfoListListener(displayExecutor,
-        // windowAreaInfos -> {
-        //     for(WindowAreaInfo newInfo : windowAreaInfos){
-        //         if(newInfo.getType().equals(WindowAreaInfo.Type.TYPE_REAR_FACING)){
-        //             windowAreaInfo = newInfo;
-        //             capabilityStatus = newInfo.getCapability(dualScreenOperation).getStatus();
-        //             break;
-        //         }
-        //         Log.d(TAG, "DualDisplay windowAreaInfo: " + newInfo.getCapability(dualScreenOperation).getStatus);
-        //     }
-        // });
         updateCapabilities();
         // - DD
     }
