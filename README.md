@@ -22,3 +22,41 @@ This project is an Android-optimized 2D Unity game based on the demonstration pr
 - **LICENSE**: Contains the licensing agreement and legal permissions for the distribution and usage of the project's source code and resources. It outlines standard rights and copyright disclaimers for developers utilizing this template.
 - **lsf-lostcrypt.slnx**: A Visual Studio XML solution file that aggregates all the individual C# project files together. It allows developers to load the entire codebase into modern IDEs in a structured manner.
 - **README.md**: Serves as the main documentation page for the project, providing a general overview of the project's purpose, its directory structure, and the responsibilities of individual files.
+
+## Getting Started & Unity MCP Setup
+
+Follow these steps to set up the project and enable the Unity Model Context Protocol (MCP) server for AI-driven editor interactions.
+
+### 1. Prerequisites
+- **Unity Editor**: Version `6000.5.4f1` (or matching version from `ProjectSettings/ProjectVersion.txt`).
+- **Python 3.10+** and [**`uv`**](https://docs.astral.sh/uv/) command line tool.
+
+### 2. Configure MCP Client Registration
+Add the `unityMCP` entry to your global MCP configuration file (typically located at `~/.gemini/config/mcp_config.json`):
+```json
+{
+  "mcpServers": {
+    "unityMCP": {
+      "serverUrl": "http://127.0.0.1:8080/mcp",
+      "type": "http",
+      "disabled": false
+    }
+  }
+}
+```
+
+### 3. Start the MCP Server
+Run the following command in your terminal to start the local HTTP bridge server. 
+> [!NOTE]
+> If your workstation overrides python indexes to a custom registry, prepend `UV_DEFAULT_INDEX` to force the use of the public PyPI registry:
+
+```bash
+UV_DEFAULT_INDEX=https://pypi.org/simple ~/.local/bin/uvx --from "mcpforunityserver==10.1.0" mcp-for-unity --transport http --http-url http://127.0.0.1:8080 --project-scoped-tools
+```
+
+### 4. Connect the Unity Editor
+1. Open the project in the Unity Editor.
+2. Go to **Window** -> **MCP for Unity** -> **Toggle MCP Window** in the menu bar.
+3. Click **Connect** (or **Start**) in the Unity window to link the editor client to your running local server.
+4. Verify the connection by querying the active instances in your AI client.
+
